@@ -1,5 +1,7 @@
 import random
 import copy
+from matplotlib import pyplot as plt
+import numpy as np
 # i am aware that there is no disadvantage in just increasing your stats and lowering your gullibility
 # this is just to test the emergent behavior and watch number go up bc number up = dopamine
 
@@ -11,6 +13,11 @@ ids = 0
 stats = ("power", "charm", "wisdom")
 run = True
 gen = 0
+heritages = []
+cont = True
+autorun = 0
+popHistory = []
+matplotlibIsCringe = []
 
 def splitList(lst, chunk_size):
     return list(zip(*[iter(lst)] * chunk_size))
@@ -31,6 +38,7 @@ def mutate(goober):
     newGoober.topStat = sorted(newGoober.stats, key=lambda item: item[1])[0][0]
     newGoober.gullibility = goober.gullibility + random.randint(γ * -1, γ)
     newGoober.gullibility = max(min(newGoober.gullibility, 100), 0)
+    newGoober.heritage = goober.heritage
 
 
 class Goober:
@@ -48,6 +56,7 @@ class Goober:
         self.weakAppearance = random.choice(("power", "charm", "wisdom"))
         self.gullibility = random.randint(45, 55)
         self.id = ids + 1
+        self.heritage = self.id
 
         goobers.append(self)
         ids += 1
@@ -75,11 +84,11 @@ while run:
             goobers = [k for k in goobers if k.id != i.id]
         else:
             print(f"It's a tie between #{i.id} and #{j.id}!", end=" ")
-            if bool(random.getrandbits(1)):
+            if (random.getrandbits(1) if len(goobers) > spawnAmt / 4 else random.getrandbits(2)):
+                print("Both goobers survive!")
+            else:
                 print("Both goobers die.")
                 goobers = [k for k in goobers if k.id != j.id and k.id != i.id]
-            else:
-                print("Both goobers survive!")
     print(f"Generation {gen}: {len(goobers)} goobers remain.")
     currentGen = copy.copy(goobers)
     for i in currentGen: 
@@ -89,12 +98,36 @@ while run:
         run == False
         continue
     print(f"They all clone and there are now {len(goobers)} goobers.")
-    inp = input("Input to continue, \"exit\" to exit > ")
-    if (inp == "exit"):
-        run = False
-    if (inp == "stats"):
-        print("Mean power: " + str(mean(list(map(lambda i: i.power, goobers)))))
-        print("Mean charm: " + str(mean(list(map(lambda i: i.charm, goobers)))))
-        print("Mean wisdom: " + str(mean(list(map(lambda i: i.wisdom, goobers)))))
-        print("Mean gullibility: " + str(mean(list(map(lambda i: i.gullibility, goobers)))))
-        input("> ")
+    cont = True
+    popHistory.append(len(goobers))
+    if autorun:
+        autorun -= 1
+        continue
+    while cont:
+        inp = input("Input to continue, \"exit\" to exit > ")
+        cont = False
+        if (inp == "exit"):
+            run = False
+        if (inp == "stats"):
+            print("Mean power: " + str(mean(list(map(lambda i: i.power, goobers)))))
+            print("Mean charm: " + str(mean(list(map(lambda i: i.charm, goobers)))))
+            print("Mean wisdom: " + str(mean(list(map(lambda i: i.wisdom, goobers)))))
+            print("Mean gullibility: " + str(mean(list(map(lambda i: i.gullibility, goobers)))))
+            cont = True
+        if (inp == "heritage"):
+            heritages = {}
+            for i in goobers:
+                if str(i.heritage) in heritages:
+                    heritages[str(i.heritage)] += 1
+                else:
+                    heritages[str(i.heritage)] = 1
+            heritages = dict(sorted(heritages.items(), key= lambda i: i[1]))
+            print(heritages)
+            cont = True
+        if (inp.isdigit()):
+            inp = int(inp)
+            autorun = inp
+        if (inp == "pop"):
+            plt.plot(np.array(popHistory))
+            plt.show()
+            cont = True
